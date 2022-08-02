@@ -22,14 +22,14 @@ app = FastAPI()
 
 @app.get("/transaction")
 def read_transaction():
-
-    return { "All Records" : objModel.get_all() }
+    return { "All Records" : Response}
 
 @app.get("/transaction/")
 def read_no_rek( no_rekening: str, start_date, end_date: Union[str, None] = None ):
     
-    Data = objModel.Mutasi(no_rekening,start_date,end_date)
-    return Data
+    Mutasi = objModel.Mutasi(no_rekening,start_date,end_date)
+    Response = objModel.outputView(Mutasi)
+    return Response
 
 @app.get("/test")
 def read_item(no_rekening: str, start_date, end_date: Union[str, None] = None  ):

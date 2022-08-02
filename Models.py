@@ -7,13 +7,14 @@ class Models() :
     
     _Singleton = None
 
+    #INSTANCE OBJECT THIS CLASS    
     def __init__(self):
         Models._Singleton = Config()
     
     def get_all(self) :
         getRecords = Models._Singleton.All()
 
-
+    #FUNCTION TO GET TRANSACTION FROM DL_DDHIST
     def Mutasi(self,acctno, start_date, end_date) :
     
         # getRecord = Models._Singleton.eachRecord(acctno)
@@ -38,8 +39,36 @@ class Models() :
 
             mutasi.append(temp)
         return mutasi    
-                     
-    
+
+    def outputView(self, keyValue):
+        data = {'Response' : 
+        {
+        "statusCode": 200,
+        "errorCode": "000",
+        "responseCode": "00",
+        "responseMessage": "Success",
+        "errors": "null"
+        ,"Data" : 
+                {
+                    "Header": 
+                        {
+                            "Nama": "Haniel Zefanya",
+                            "Alamat": "null",
+                            "NomorRekening": "null",
+                            "NamaProduk": "null",
+                            "Valuta": "null",
+                            "TanggalLaporan": "null",					
+                            "PeriodeTransaksi": "null",
+                            "UnitKerja": "null",
+                            "AlamatUnitKerja": "null"
+                        }
+                    ,"Body" :keyValue
+                } #closing of Data
+        }  #closing of response     
+        } #closing of data       
+
+        return data
+
 #TO GET FIELD NAMES FROM TABLES
     def fields(conn) :
         results = {}
