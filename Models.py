@@ -49,11 +49,11 @@ class Models() :
                                 ,'tanggalTransaksi'  : row[field_map['TRDATE']] 
                                 ,'tanggalEfektif'    :  row[field_map['TRDATE']] 
                                 ,'jamTransaksi' 	 :  row[field_map['TRTIME'] ] 
-                                ,'kodeTransaksi' 	 :  row[field_map['TRANCD'] ]
+                                ,'kodeTransaksi' 	 :  row[field_map['TRNCD'] ]
                                 ,'deskTran'  	     : ''
                                 ,'saldoAwal'         :''
-                                ,'mutasiKredit'      : row[field_map['KREDIT']] 
-                                ,'mytasiDebit'       : row[field_map['DEBIT']] 
+                                ,'mutasiKredit'      : row[field_map['Kredit']] 
+                                ,'mytasiDebit'       : row[field_map['Debit']] 
                                 ,'saldoAkhr'         :''
                             }    
                         } #closing of Data

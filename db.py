@@ -30,7 +30,7 @@ class Config:
 
     def eachRecord(self, acctno) : 
         query = f"""SELECT 
-                        dhist.TRANCD 	
+                        dhist.TRNCD 	
                         ,dhist.TRACCT
                         ,dhist.TRDATE 
                         ,CASE 
