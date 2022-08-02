@@ -28,11 +28,11 @@ def read_transaction():
 @app.get("/transaction/")
 def read_no_rek( no_rekening: str, start_date, end_date: Union[str, None] = None ):
     
-    Data = objModel.get_record(no_rekening,start_date,end_date)
+    Data = objModel.Mutasi(no_rekening,start_date,end_date)
     return Data
 
 @app.get("/test")
 def read_item(no_rekening: str, start_date, end_date: Union[str, None] = None  ):
-    return objModel.get_record(no_rekening,start_date, end_date) 
+    return objModel.Mutasi(no_rekening,start_date, end_date) 
 
 # uvicorn.run(app, port=5000 , host='0.0.0.0')

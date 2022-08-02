@@ -14,55 +14,32 @@ class Models() :
         getRecords = Models._Singleton.All()
 
 
-    def get_record(self,acctno, start_date, end_date) :
-        #hellow
-        # start_date = time.strptime(start_date, '%Y-%m-%d')
+    def Mutasi(self,acctno, start_date, end_date) :
+    
         # getRecord = Models._Singleton.eachRecord(acctno)
         getRecord = Models._Singleton.dummy_query(acctno)
         field_map = Models.fields(getRecord)
+
+        mutasi = []
         for row in getRecord :
-            dict ={
+            temp = dict.fromkeys(['NoRek','tanggalTransaksi','tanggalEfektif','jamTransaksi','kodeTransaksi','deskTran',
+            'saldoAwal','mutasiKredit','mytasiDebit','saldoAkhr' ])
 
-                        'Response' : 
-                    {
-                        "statusCode": 200,
-                        "errorCode": "000",
-                        "responseCode": "00",
-                        "responseMessage": "Success",
-                        "errors": "null"
-                        ,"Data" : {
-                            "Header": 
-                            {
-                                "Nama": "Haniel Zefanya",
-                                "Alamat": "null",
-                                "NomorRekening": "null",
-                                "NamaProduk": "null",
-                                "Valuta": "null",
-                                "TanggalLaporan": "null",					
-                                "PeriodeTransaksi": "null",
-                                "UnitKerja": "null",
-                                "AlamatUnitKerja": "null"
-                            }
-                        ,"Body" :
-                            { 
-                                'NoRek'              : row[field_map['TRACCT']] 
-                                ,'tanggalTransaksi'  : row[field_map['TRDATE']] 
-                                ,'tanggalEfektif'    :  row[field_map['TRDATE']] 
-                                ,'jamTransaksi' 	 :  row[field_map['TRTIME'] ] 
-                                ,'kodeTransaksi' 	 :  row[field_map['TRNCD'] ]
-                                ,'deskTran'  	     : ''
-                                ,'saldoAwal'         :''
-                                ,'mutasiKredit'      : row[field_map['Kredit']] 
-                                ,'mytasiDebit'       : row[field_map['Debit']] 
-                                ,'saldoAkhr'         :''
-                            }    
-                        } #closing of Data
-                        
-                    } #closing of Response 
+            temp['NoRek']	            =  row[field_map['TRACCT']]	
+            temp['tanggalTransaksi']    =row[field_map['TRDATE']]	
+            temp['tanggalEfektif']	    =row[field_map['TRDATE']]	
+            temp['jamTransaksi']	    =row[field_map['TRTIME']]	
+            temp['kodeTransaksi']	    = row[field_map['TRNCD'] ]	
+            temp['deskTran']	        =""	
+            temp['saldoAwal']	        =""	
+            temp['mutasiKredit']        =row[field_map['Kredit']]	
+            temp['mytasiDebit']	        = row[field_map['Debit']]	
+            temp['saldoAkhr']	        =""	
 
-                } #closing of data variable
-        return dict          
-            
+            mutasi.append(temp)
+        return mutasi    
+                     
+    
 #TO GET FIELD NAMES FROM TABLES
     def fields(conn) :
         results = {}
