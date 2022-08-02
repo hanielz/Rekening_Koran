@@ -15,6 +15,7 @@ class Models() :
 
 
     def get_record(self,acctno, start_date, end_date) :
+        #hellow
         # start_date = time.strptime(start_date, '%Y-%m-%d')
         # getRecord = Models._Singleton.eachRecord(acctno)
         getRecord = Models._Singleton.dummy_query(acctno)
