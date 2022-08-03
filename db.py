@@ -1,9 +1,9 @@
-# import phoenixdb
-# import phoenixdb.cursor
+import phoenixdb
+import phoenixdb.cursor
 
 
-import mysql.connector 
-from mysql.connector import Error
+# import mysql.connector 
+# from mysql.connector import Error
 
 class Config:
 
@@ -13,8 +13,8 @@ class Config:
 
     def __init__(self) :
             try :
-                #Config.__connection =phoenixdb.connect('http://hbdcm01.hq.bri.co.id:8765/', autocommit=True, auth="SPNEGO")
-                Config.__connection = mysql.connector.connect(host='localhost', user='root', password='P@ssw0rd', db='classicmodels') 
+                Config.__connection =phoenixdb.connect('http://hbdcm01.hq.bri.co.id:8765/', autocommit=True, auth="SPNEGO")
+                #Config.__connection = mysql.connector.connect(host='localhost', user='root', password='P@ssw0rd', db='classicmodels') 
             except:
                 print("Error while connect to Phoenix") 
     #SINGLETON PATTERN
@@ -30,7 +30,7 @@ class Config:
 
     def eachRecord(self, acctno) : 
         query = f"""SELECT 
-                        dhist.TRNCD 	
+                        dhist.TRANCD 	
                         ,dhist.TRACCT
                         ,dhist.TRDATE 
                         ,CASE 

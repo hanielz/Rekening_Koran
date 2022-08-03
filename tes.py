@@ -1,30 +1,16 @@
-from var_dump import var_dump
+from datetime import datetime
+tgl_awal ="20220616"
+tgl_akhir ="20220630"
 
-import mysql.connector 
-from mysql.connector import Error
-
-#FastAPI Package
-from fastapi import FastAPI, status
-from typing import Union
-
-app = FastAPI()
-        
-def run_query(query) :
-    cursor = mysql.connector.connect(host='localhost', user='root', password='P@ssw0rd', db='classicmodels').cursor(prepared=True)
-    cursor.execute(query)
-    return cursor
+def convertJulianDate(self,date,*argv):
+    date=datetime.strptime(date,'%Y%m%d')
+    date=int(str(date)[:4]+str(date.strftime('%j')))
     
+    for number in argv:
+        date += number
+    return date
 
-def Model() :
-    db = run_query("select * from DL_DHIST")
-    
+julianDate = convertJulianDate(tgl_awal,tgl_akhir)
 
-    return db
-   
 
-@app.get("/test")
-def read_item( ):
-    data = Model()
-    return {"Response" : data }
-    # return Model()
-
+print(julianDate)
