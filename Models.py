@@ -11,14 +11,39 @@ class Models() :
     def __init__(self):
         Models._Singleton = Config()
     
-    def get_all(self) :
-        getRecords = Models._Singleton.All()
+    def demografi(self,acctno):
+        demografi = Models._Singleton.demografiQuery(acctno)
+        field_map = Models.fields(demografi)
+
+        demo = []
+        full= ""    
+        for row in demografi :
+            
+            # row[field_map['GELAR_SEBELUM_NAMA']],row[field_map['NAMA_LENGKAP']],row[field_map['GELAR_SESUDAH_NAMA']]
+            # full = "%s %s %s" % ("DR" ,row[field_map['NAMA_LENGKAP']], "S.T")
+            dict = {
+                    'nama'                : row[field_map['NAMA_LENGKAP']]
+                    ,'Alamat'              : row[field_map['ALAMAT_ID1']]
+                    ,'nomorRekening'       : row[field_map['NAMA_LENGKAP']]
+                    ,'namaProduk'          : row[field_map['PRODUCT']]
+                    ,'valuta'              : row[field_map['CURRENCY']]
+                    ,'tanggalLaporan'      : row[field_map['TANGGALLAPORAN']]    
+                    ,'periodeTransaksi'    : ""
+                    ,'pekerjaan'           : row[field_map['PEKERJAAN']]
+                    ,'alamatKantor'        : row[field_map['ALAMAT_KANTOR3']]
+            }
+            
+            return dict
 
     #FUNCTION TO GET TRANSACTION FROM DL_DDHIST
     def Mutasi(self,acctno, start_date, end_date) :
-        julian = Models.convertJulianDate(self, start_date)
-        print(julian)
-        getRecord = Models._Singleton.eachRecord(acctno)
+
+        #CONVERT JULIAN DATE
+        start_date = Models.convertJulianDate(start_date)
+        end_date = Models.convertJulianDate(end_date)
+        
+         #retrive acctno to lookup ddmast table 
+        getRecord = Models._Singleton.eachRecord(acctno, start_date, end_date) #get record from dl_ddhist
         # getRecord = Models._Singleton.dummy_query(acctno)
         field_map = Models.fields(getRecord)
 
@@ -41,7 +66,7 @@ class Models() :
             mutasi.append(temp)
         return mutasi    
 
-    def outputView(self, keyValue):
+    def outputView(self, body,demografi):
         data = {'Response' : 
         {
         "statusCode": 200,
@@ -51,19 +76,9 @@ class Models() :
         "errors": "null"
         ,"Data" : 
                 {
-                    "Header": 
-                        {
-                            "Nama": "Haniel Zefanya",
-                            "Alamat": "null",
-                            "NomorRekening": "null",
-                            "NamaProduk": "null",
-                            "Valuta": "null",
-                            "TanggalLaporan": "null",					
-                            "PeriodeTransaksi": "null",
-                            "UnitKerja": "null",
-                            "AlamatUnitKerja": "null"
-                        }
-                    ,"Body" :keyValue
+                    "Header":demografi
+
+                    ,"Body" :body
                 } #closing of Data
         }  #closing of response     
         } #closing of data       
@@ -82,7 +97,7 @@ class Models() :
         return results
     
     #2.Convert to Julian Date :
-    def convertJulianDate(self, date):
+    def convertJulianDate(date):
         date=datetime.strptime(date,'%Y%m%d')
         date=int(str(date)[:4]+str(date.strftime('%j')))
         return date

@@ -13,7 +13,7 @@ class Config:
 
     def __init__(self) :
             try :
-                Config.__connection =phoenixdb.connect('http://hbdcm01.hq.bri.co.id:8765/', autocommit=True, auth="SPNEGO")
+                Config.__connection =phoenixdb.connect('http://hbdcm03.hq.bri.co.id:8765/', autocommit=True, auth="SPNEGO")
                 #Config.__connection = mysql.connector.connect(host='localhost', user='root', password='P@ssw0rd', db='classicmodels') 
             except:
                 print("Error while connect to Phoenix") 
@@ -24,12 +24,39 @@ class Config:
     #         Config()
     #     return Config.__instance__
 
-    def All(self) :
-        run = Config.run_query(self, "SELECT ACCTNO,CIFNO,TRANSACTIONID FROM REKENING_KORAN.DDMAST  LIMIT 5")
+    #GEET DEMOGRAFI RECORD    
+    def demografiQuery(self,acctno) :
+        query =f"""
+                SELECT 
+                    GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA,
+                    ALAMAT_ID1, ALAMAT_ID2,ALAMAT_ID3,ALAMAT_ID4,
+                    current_date() AS TanggalLaporan,
+                    JABATAN AS Pekerjaan,
+                    ALAMAT_KANTOR3, RT_KANTOR, RW_KANTOR, KELURAHAN_KANTOR,KECAMATAN_KANTOR, KOTA_KANTOR, PROPINSI_KANTOR, KODEPOS_KANTOR,
+                    PRODUCT,
+                    CURRENCY
+                    FROM  CHUB_DEMOGRAPHY c 
+                    JOIN 
+                        (SELECT 
+                            a.CIFNO,a.ACCTNO,a.PRODUCT,a.CURRENCY
+                        FROM CHUB_SAVING a
+                        WHERE a.CIFNO IN 
+                        (SELECT b.CIFNO FROM REKENING_KORAN.DDMAST b
+                        WHERE  b.ACCTNO ='{acctno}')
+                        AND a.ACCTNO like '%{acctno}' ) AS d
+                    ON c.CIFNO = d.CIFNO"""	
+        run = Config.run_query(self, query)
         return run
 
-    def eachRecord(self, acctno) : 
-        query = f"""SELECT 
+
+    def eachRecord(self, acctno, start_date, end_date) : 
+        print(start_date)
+        print(end_date)
+        query = f"""
+                 SELECT ddmast.ACCTNO,ddmast.CBAL,d.*  
+                 FROM REKENING_KORAN.DDMAST ddmast
+                    JOIN 
+                    (SELECT 
                         dhist.TRANCD 	
                         ,dhist.TRACCT
                         ,dhist.TRDATE 
@@ -44,11 +71,12 @@ class Config:
                         ,dhist.TRUSER 
                         ,dhist.TRREMK 
                         ,dhist.TRTIME
-                        ,dhist.TRANCD
                         ,dhist.TLBDS1
                         ,dhist.TLBDS2	
-                        FROM REKENING_KORAN.DL_DDHIST dhist
-                    where TRACCT='{acctno}'"""
+                FROM REKENING_KORAN.DL_DDHIST dhist
+                WHERE dhist.TRACCT = '{acctno}' AND TO_NUMBER(dhist.TRDATE) BETWEEN {start_date} AND {end_date}) AS d
+                ON ddmast.ACCTNO = d.TRACCT
+                ORDER BY (d.TRDATE,d.TRTIME) ASC""" 
 
         run = Config.run_query(self, query)
         # for row in run :
@@ -85,4 +113,4 @@ class Config:
         Config._cursor = Config.__connection.cursor()
         Config._cursor.execute(sql)
         
-        return Config._cursor
+        return Config._cursor   
