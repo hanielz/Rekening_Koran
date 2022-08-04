@@ -24,7 +24,7 @@ class Models() :
             dict = {
                     'nama'                : row[field_map['NAMA_LENGKAP']]
                     ,'Alamat'              : row[field_map['ALAMAT_ID1']]
-                    ,'nomorRekening'       : row[field_map['NAMA_LENGKAP']]
+                    ,'nomorRekening'       : row[field_map['ACCTNO']]
                     ,'namaProduk'          : row[field_map['PRODUCT']]
                     ,'valuta'              : row[field_map['CURRENCY']]
                     ,'tanggalLaporan'      : row[field_map['TANGGALLAPORAN']]    
@@ -48,7 +48,9 @@ class Models() :
         field_map = Models.fields(getRecord)
 
         mutasi = []
+
         for row in getRecord :
+            saldo_awal = row[field_map['CBAL']]	
             temp = dict.fromkeys(['NoRek','tanggalTransaksi','tanggalEfektif','jamTransaksi','kodeTransaksi','deskTran',
             'saldoAwal','mutasiKredit','mytasiDebit','saldoAkhr' ])
 
@@ -58,11 +60,12 @@ class Models() :
             temp['jamTransaksi']	    =row[field_map['TRTIME']]	
             temp['kodeTransaksi']	    = row[field_map['TRANCD'] ]	
             temp['deskTran']	        =""	
-            temp['saldoAwal']	        =""	
+            temp['saldoAwal']	        = float(saldo_awal)
             temp['mutasiKredit']        =row[field_map['KREDIT']]	
             temp['mytasiDebit']	        = row[field_map['DEBIT']]	
-            temp['saldoAkhr']	        =""	
+            temp['saldoAkhr']	        = ""
 
+            saldo_awal= saldo_awal - row[field_map['KREDIT'] ] + row[field_map['DEBIT'] ]
             mutasi.append(temp)
         return mutasi    
 

@@ -28,10 +28,9 @@ class Config:
     def demografiQuery(self,acctno) :
         query =f"""
                 SELECT 
-                    GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA,
+                    GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA,ACCTNO,
                     ALAMAT_ID1, ALAMAT_ID2,ALAMAT_ID3,ALAMAT_ID4,
-                    current_date() AS TanggalLaporan,
-                    JABATAN AS Pekerjaan,
+                    current_date() AS TanggalLaporan,jenis_pekerjaan    AS Pekerjaan,
                     ALAMAT_KANTOR3, RT_KANTOR, RW_KANTOR, KELURAHAN_KANTOR,KECAMATAN_KANTOR, KOTA_KANTOR, PROPINSI_KANTOR, KODEPOS_KANTOR,
                     PRODUCT,
                     CURRENCY
@@ -53,7 +52,7 @@ class Config:
         print(start_date)
         print(end_date)
         query = f"""
-                 SELECT ddmast.ACCTNO,ddmast.CBAL,d.*  
+                 SELECT ACCTNO,CBAL,d.*  
                  FROM REKENING_KORAN.DDMAST ddmast
                     JOIN 
                     (SELECT 
@@ -113,4 +112,4 @@ class Config:
         Config._cursor = Config.__connection.cursor()
         Config._cursor.execute(sql)
         
-        return Config._cursor   
+        return Config._cursor       
