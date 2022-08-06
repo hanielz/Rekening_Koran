@@ -1,9 +1,9 @@
-import phoenixdb
-import phoenixdb.cursor
+# import phoenixdb
+# import phoenixdb.cursor
 
 
-# import mysql.connector 
-# from mysql.connector import Error
+import mysql.connector 
+from mysql.connector import Error
 
 class Config:
 
@@ -13,8 +13,8 @@ class Config:
 
     def __init__(self) :
             try :
-                Config.__connection =phoenixdb.connect('http://hbdcm03.hq.bri.co.id:8765/', autocommit=True, auth="SPNEGO")
-                #Config.__connection = mysql.connector.connect(host='localhost', user='root', password='P@ssw0rd', db='classicmodels') 
+                #Config.__connection =phoenixdb.connect('http://hbdcm01.hq.bri.co.id:8765/', autocommit=True, auth="SPNEGO")
+                Config.__connection = mysql.connector.connect(host='localhost', user='root', password='P@ssw0rd', db='classicmodels') 
             except:
                 print("Error while connect to Phoenix") 
     #SINGLETON PATTERN
@@ -29,15 +29,15 @@ class Config:
         query =f"""
                 SELECT 
                     GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA,ACCTNO,
-                    ALAMAT_ID1, ALAMAT_ID2,ALAMAT_ID3,ALAMAT_ID4,
+                    ALAMAT_ID1, ALAMAT_ID2,ALAMAT_ID3,ALAMAT_ID4,d.BRDESC AS UNIT_KERJA,
                     current_date() AS TanggalLaporan,jenis_pekerjaan    AS Pekerjaan,
-                    ALAMAT_KANTOR3, RT_KANTOR, RW_KANTOR, KELURAHAN_KANTOR,KECAMATAN_KANTOR, KOTA_KANTOR, PROPINSI_KANTOR, KODEPOS_KANTOR,
+                    ALAMAT_KANTOR4, RT_KANTOR, RW_KANTOR, KELURAHAN_KANTOR,KECAMATAN_KANTOR, KOTA_KANTOR, PROPINSI_KANTOR, KODEPOS_KANTOR,
                     PRODUCT,
                     CURRENCY
                     FROM  CHUB_DEMOGRAPHY c 
                     JOIN 
                         (SELECT 
-                            a.CIFNO,a.ACCTNO,a.PRODUCT,a.CURRENCY
+                            a.CIFNO,a.ACCTNO,a.PRODUCT,a.CURRENCY,a.BRDESC
                         FROM CHUB_SAVING a
                         WHERE a.CIFNO IN 
                         (SELECT b.CIFNO FROM REKENING_KORAN.DDMAST b
@@ -77,32 +77,30 @@ class Config:
                 ON ddmast.ACCTNO = d.TRACCT
                 ORDER BY (d.TRDATE,d.TRTIME) ASC""" 
 
-        run = Config.run_query(self, query)
+        run = Config.run_query(self, query) 
         # for row in run :
         return run
 
-    def dummy_query(self, acctno) :
-        query = f"""
-            select
-                dhist.TRNCD    
-                ,dhist.TRACCT
-                ,dhist.TRDATE
+    def dummy_query(self, acctno,start_date, end_date) :
+
+        query = f""" 
+            select 
+                CBAL,
+                 TRACCT 
+                ,TRDATE
                 ,CASE 
-                WHEN dhist.TRDORC ='C' THEN dhist.amt
-                ELSE 0
+                    WHEN    TRDORC ='C' THEN amt
+                    ELSE 0
                 END AS Kredit
                 ,CASE	
-                WHEN dhist.TRDORC ='D' THEN dhist.amt 
-                ELSE 0
+                    WHEN TRDORC ='D' THEN amt 
+                    ELSE 0
                 END AS Debit
-                ,dhist.TRUSER 
-                ,dhist.TRREMK 
-                ,dhist.TRTIME 
-                ,dhist.TLBDT1
-                ,dhist.TLBDS2
-                from DL_DHIST dhist
-                where dhist.TRACCT= {acctno};
-                     """
+                ,TRTIME
+                ,TRNCD
+            from DL_DHIST a
+            join DDMAST b on a.tracct = b.acctno and TRACCT = '{acctno}'"""
+
         run = Config.run_query(self, query)
         
         return run

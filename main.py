@@ -22,7 +22,7 @@ app = FastAPI()
 
 @app.get("/transaction")
 def read_transaction():
-    return { "All Records" : Response}
+    return { "All Records" : 'Response'}
 
 @app.get("/transaction/")
 def read_no_rek( no_rekening: str, start_date, end_date: Union[str, None] = None ):
@@ -31,10 +31,11 @@ def read_no_rek( no_rekening: str, start_date, end_date: Union[str, None] = None
     Mutasi = objModel.Mutasi(no_rekening,start_date,end_date)
 
     ##2.DEMOGRAFI
-    Demografi = objModel.demografi(no_rekening) 
-
+    #Demografi = objModel.demografi(no_rekening,start_date,end_date) 
+    
     ##3.OUTPUT RESPONSE
-    Response = objModel.outputView(Mutasi,Demografi)
+    # Response = objModel.outputView(Mutasi,Demografi)
+    Response = objModel.outputView(Mutasi)
     return Response
 
 @app.get("/test")

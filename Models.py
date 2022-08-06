@@ -1,4 +1,6 @@
 from datetime import datetime
+import datetime
+
 from var_dump import var_dump
 
 from db import Config
@@ -11,29 +13,35 @@ class Models() :
     def __init__(self):
         Models._Singleton = Config()
     
-    def demografi(self,acctno):
-        demografi = Models._Singleton.demografiQuery(acctno)
+    def demografi(self,acctno,start_date,end_date):
+        demografi = Models._Singleton.demografiQuery(acctno) #retrive date from Database
         field_map = Models.fields(demografi)
 
-        demo = []
-        full= ""    
+        start_date = datetime.datetime.strptime(start_date, "%Y%m%d").strftime("%d/%m/%y")
+        end_date =  datetime.datetime.strptime(end_date, "%Y%m%d").strftime("%d/%m/%y")
+           
+
+        alamat_kantor= ""    
         for row in demografi :
             
-            # row[field_map['GELAR_SEBELUM_NAMA']],row[field_map['NAMA_LENGKAP']],row[field_map['GELAR_SESUDAH_NAMA']]
-            # full = "%s %s %s" % ("DR" ,row[field_map['NAMA_LENGKAP']], "S.T")
+            row[field_map['ALAMAT_KANTOR4']],row[field_map['KODEPOS_KANTOR'] ]
+            alamat_kantor= "%s %s" % (row[field_map['ALAMAT_KANTOR4']],row[field_map['KODEPOS_KANTOR'] ])
+
             dict = {
                     'nama'                : row[field_map['NAMA_LENGKAP']]
                     ,'Alamat'              : row[field_map['ALAMAT_ID1']]
                     ,'nomorRekening'       : row[field_map['ACCTNO']]
                     ,'namaProduk'          : row[field_map['PRODUCT']]
                     ,'valuta'              : row[field_map['CURRENCY']]
-                    ,'tanggalLaporan'      : row[field_map['TANGGALLAPORAN']]    
-                    ,'periodeTransaksi'    : ""
-                    ,'pekerjaan'           : row[field_map['PEKERJAAN']]
-                    ,'alamatKantor'        : row[field_map['ALAMAT_KANTOR3']]
+                    ,'tanggalLaporan'      : row[field_map['TANGGALLAPORAN']].strftime("%d/%m/%d/%y")
+                    ,'periodeTransaksi'    : start_date+"-"+end_date
+                    ,'unitKerja'           : row[field_map['UNIT_KERJA']]
+                    ,'alamatUnitKerja'     : alamat_kantor
             }
             
             return dict
+
+    #FUNCTION TO GET TRANSACTION FROM DL_DDHIST
 
     #FUNCTION TO GET TRANSACTION FROM DL_DDHIST
     def Mutasi(self,acctno, start_date, end_date) :
@@ -42,34 +50,46 @@ class Models() :
         start_date = Models.convertJulianDate(start_date)
         end_date = Models.convertJulianDate(end_date)
         
-         #retrive acctno to lookup ddmast table 
-        getRecord = Models._Singleton.eachRecord(acctno, start_date, end_date) #get record from dl_ddhist
-        # getRecord = Models._Singleton.dummy_query(acctno)
-        field_map = Models.fields(getRecord)
+        #retrive acctno to lookup ddmast table 
+        #getRecords = Models._Singleton.eachRecord(acctno, start_date, end_date) #get record from dl_ddhist
+        
 
+        getRecords = Models._Singleton.dummy_query(acctno,start_date,end_date)
+        field_map = Models.fields(getRecords)
+        
+        #get CBAL from previous period    
+        
+        saldo_awal = 30000                    
         mutasi = []
-
-        for row in getRecord :
-            saldo_awal = row[field_map['CBAL']]	
+        
+        for row in getRecords :
+            # saldo_awal = saldo_awal - debit + kredit
             temp = dict.fromkeys(['NoRek','tanggalTransaksi','tanggalEfektif','jamTransaksi','kodeTransaksi','deskTran',
-            'saldoAwal','mutasiKredit','mytasiDebit','saldoAkhr' ])
+            'saldoAwal','mutasiKredit','mutasiDebit','saldoAkhir' ])
 
-            temp['NoRek']	            =  row[field_map['TRACCT']]	
-            temp['tanggalTransaksi']    =row[field_map['TRDATE']]	
+            
+            kredit = row[field_map['Kredit']]        
+            debit = row[field_map['Debit']]
+            
+
+            temp['NoRek']	            = row[field_map['TRACCT']]	
+            temp['tanggalTransaksi']    = row[field_map['TRDATE']]
             temp['tanggalEfektif']	    =row[field_map['TRDATE']]	
-            temp['jamTransaksi']	    =row[field_map['TRTIME']]	
-            temp['kodeTransaksi']	    = row[field_map['TRANCD'] ]	
+            temp['jamTransaksi']	    =row[field_map['TRTIME']]   
+            temp['kodeTransaksi']	    = row[field_map['TRNCD'] ]	
             temp['deskTran']	        =""	
-            temp['saldoAwal']	        = float(saldo_awal)
-            temp['mutasiKredit']        =row[field_map['KREDIT']]	
-            temp['mytasiDebit']	        = row[field_map['DEBIT']]	
-            temp['saldoAkhr']	        = ""
+            temp['saldoAwal']	        = saldo_awal
+            temp['mutasiKredit']        =row[field_map['Kredit']]	
+            temp['mutasiDebit']	        = row[field_map['Debit']]	
+            temp['saldoAkhir']	        =  transaksi = saldo_awal  - debit + kredit
 
-            saldo_awal= saldo_awal - row[field_map['KREDIT'] ] + row[field_map['DEBIT'] ]
             mutasi.append(temp)
+            # saldo_awal = transaksi
         return mutasi    
 
-    def outputView(self, body,demografi):
+    #FUNCTION TO SHOW
+    # def outputView(self,body,demografi):
+    def outputView(self, body):
         data = {'Response' : 
         {
         "statusCode": 200,
@@ -77,12 +97,12 @@ class Models() :
         "responseCode": "00",
         "responseMessage": "Success",
         "errors": "null"
-        ,"Data" : 
-                {
-                    "Header":demografi
-
-                    ,"Body" :body
-                } #closing of Data
+        ,"Data" :{
+                    # "Header" : demografi,
+                    "Body" : body
+                 }
+                    
+                 #closing of Data
         }  #closing of response     
         } #closing of data       
 
@@ -101,6 +121,10 @@ class Models() :
     
     #2.Convert to Julian Date :
     def convertJulianDate(date):
-        date=datetime.strptime(date,'%Y%m%d')
+        date=datetime.datetime.strptime(date,'%Y%m%d')
         date=int(str(date)[:4]+str(date.strftime('%j')))
         return date
+
+    
+        
+        
