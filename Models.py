@@ -38,7 +38,7 @@ class Models() :
                     ,'nomorRekening'       : row[field_map['ACCTNO']]
                     ,'namaProduk'          : row[field_map['PRODUCT']]
                     ,'valuta'              : row[field_map['CURRENCY']]
-                    ,'tanggalLaporan'      : row[field_map['TANGGALLAPORAN']].strftime("%d/%m/%d/%y")
+                    ,'tanggalLaporan'      : row[field_map['TANGGALLAPORAN']].strftime("%d/%m/%y")
                     ,'periodeTransaksi'    : start_date+"-"+end_date
                     ,'unitKerja'           : row[field_map['UNIT_KERJA']]
                     ,'alamatUnitKerja'     : row[field_map['ALAMATUNITKERJA']]
@@ -80,7 +80,7 @@ class Models() :
             temp['kodeTransaksi']	    = row[field_map['TRNCD'] ]	
             temp['deskTran']	        =""	
             temp['saldoAwal']	        = saldo_awal
-            temp['mutasiKredit']        =row[field_map['Kredit']]	
+            temp['mutasiKredit']        =row[field_map['Kredit']]
             temp['mutasiDebit']	        = row[field_map['Debit']]	
             temp['saldoAkhir']	        = Models.transaksi = saldo_awal - row[field_map['Debit']]  + row[field_map['Kredit']]
 
@@ -89,12 +89,11 @@ class Models() :
             mutasi_rekening.append(temp)
             
             
-            Models.footer = Models.ConvertTerbilang(temp['saldoAkhir'])
+            Models.footer = Models.ConvertTerbilang(Models.transaksi)
         return mutasi_rekening
 
    
     def FooterParameter(type) :
-        print(Models.saldo_awal)
         Mutasi = Models._Singleton.dummy_query(Models.acctno, Models.start_date, Models.end_date)
         field_map = Models.fields(Mutasi)
         hitung=sum(row[field_map[type]] for row in Mutasi)

@@ -1,8 +1,9 @@
-def sum_list(l):
-    sum = 0
-    for x in l:
-        sum += x
-    return sum
-l = [1, 2, 3, 4, 5]
+result = []
+temp = dict.fromkeys(['NoRek','tanggalTransaksi'])
 
-print(sum_list(l))
+temp['NoRek']	            = 'a'
+temp['tanggalTransaksi']    = float(1234)
+result.append(temp)
+
+
+print(result)
