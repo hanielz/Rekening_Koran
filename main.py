@@ -24,17 +24,16 @@ app = FastAPI()
 def read_transaction():
     return { "All Records" : 'Response'}
 
-@app.get("/transaction/")
-def read_no_rek( no_rekening: str, start_date, end_date: Union[str, None] = None ):
+@app.get("/Rekening_Koran/casa/{no_rekening}/{start_date}/{end_date}")
+def read_no_rek( no_rekening: str, start_date, end_date: str):
     
     ##1.MUTASI
     Mutasi = objModel.Mutasi(no_rekening,start_date,end_date)
-
+    
     ##2.DEMOGRAFI
     #Demografi = objModel.demografi(no_rekening,start_date,end_date) 
-    
     ##3.OUTPUT RESPONSE
-    # Response = objModel.outputView(Mutasi,Demografi)
+    #Response = objModel.outputView(Mutasi,Demografi)
     Response = objModel.outputView(Mutasi)
     return Response
 

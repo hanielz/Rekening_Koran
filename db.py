@@ -1,7 +1,6 @@
 # import phoenixdb
 # import phoenixdb.cursor
 
-
 import mysql.connector 
 from mysql.connector import Error
 
@@ -13,7 +12,7 @@ class Config:
 
     def __init__(self) :
             try :
-                #Config.__connection =phoenixdb.connect('http://hbdcm01.hq.bri.co.id:8765/', autocommit=True, auth="SPNEGO")
+                #Config.__connection=phoenixdb.connect('http://hbdcm03.hq.bri.co.id:8765/',autocommit=True, auth="SPNEGO")
                 Config.__connection = mysql.connector.connect(host='localhost', user='root', password='P@ssw0rd', db='classicmodels') 
             except:
                 print("Error while connect to Phoenix") 
@@ -27,31 +26,35 @@ class Config:
     #GEET DEMOGRAFI RECORD    
     def demografiQuery(self,acctno) :
         query =f"""
-                SELECT 
-                    GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA,ACCTNO,
-                    ALAMAT_ID1, ALAMAT_ID2,ALAMAT_ID3,ALAMAT_ID4,d.BRDESC AS UNIT_KERJA,
-                    current_date() AS TanggalLaporan,jenis_pekerjaan    AS Pekerjaan,
-                    ALAMAT_KANTOR4, RT_KANTOR, RW_KANTOR, KELURAHAN_KANTOR,KECAMATAN_KANTOR, KOTA_KANTOR, PROPINSI_KANTOR, KODEPOS_KANTOR,
-                    PRODUCT,
-                    CURRENCY
-                    FROM  CHUB_DEMOGRAPHY c 
-                    JOIN 
-                        (SELECT 
-                            a.CIFNO,a.ACCTNO,a.PRODUCT,a.CURRENCY,a.BRDESC
-                        FROM CHUB_SAVING a
-                        WHERE a.CIFNO IN 
-                        (SELECT b.CIFNO FROM REKENING_KORAN.DDMAST b
-                        WHERE  b.ACCTNO ='{acctno}')
-                        AND a.ACCTNO like '%{acctno}' ) AS d
-                    ON c.CIFNO = d.CIFNO"""	
+            SELECT 
+                GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA,
+                ALAMAT_ID1, ALAMAT_ID2,ALAMAT_ID3,ALAMAT_ID4,
+                current_date() AS TanggalLaporan,
+                ACCTNO,
+                d.BRDESC AS UNIT_KERJA,
+                c.ALAMAT_KANTOR3, c.RT_KANTOR, c.RW_KANTOR, c.KELURAHAN_KANTOR,c.KECAMATAN_KANTOR, c.KOTA_KANTOR, c.PROPINSI_KANTOR, c.KODEPOS_KANTOR,
+                PRODUCT,
+                CURRENCY,
+                e.JDADDR AS ALAMATUNITKERJA
+            FROM  CHUB_DEMOGRAPHY c 
+            JOIN 
+            (SELECT 
+                a.CIFNO,ACCTNO,REGEXP_REPLACE(PRODUCT,'^\S* ','') AS PRODUCT,a.CURRENCY,a.BRANCH,a.BRDESC
+            FROM CHUB_SAVING a
+            WHERE a.CIFNO IN 
+            (SELECT b.CIFNO FROM REKENING_KORAN.DDMAST b
+            WHERE  b.ACCTNO ='{acctno}' LIMIT 1)
+            AND a.ACCTNO like '%{acctno}' LIMIT 1) AS d
+            ON c.CIFNO = d.CIFNO
+            INNER JOIN REKENING_KORAN.AS4_JHDATA e
+            ON d.BRANCH=e.JDBR"""
+
         run = Config.run_query(self, query)
         return run
 
 
-    def eachRecord(self, acctno, start_date, end_date) : 
-        print(start_date)
-        print(end_date)
-        query = f"""
+    def MutasiQuery(self, acctno, start_date, end_date) : 
+        query = f"""    
                  SELECT ACCTNO,CBAL,d.*  
                  FROM REKENING_KORAN.DDMAST ddmast
                     JOIN 
@@ -80,6 +83,12 @@ class Config:
         run = Config.run_query(self, query) 
         # for row in run :
         return run
+    def sum_query(self, acctno,start_date, end_date):
+        query=f"""select 
+                      CASE WHEN TRDORC ='D' THEN sum(amt) END AS sum_debit
+                     ,CASE WHEN TRDORC ='C' THEN SUM(amt) END AS sum_kredit 
+                   from DL_DHIST WHERE TRACCT='{acctno}' group by TRDORC;"""
+        run = Config.run_query(self, query)
 
     def dummy_query(self, acctno,start_date, end_date) :
 
@@ -89,7 +98,7 @@ class Config:
                  TRACCT 
                 ,TRDATE
                 ,CASE 
-                    WHEN    TRDORC ='C' THEN amt
+                    WHEN TRDORC ='C' THEN amt
                     ELSE 0
                 END AS Kredit
                 ,CASE	

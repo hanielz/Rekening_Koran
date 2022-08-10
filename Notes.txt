@@ -78,44 +78,23 @@ ELECT
 
 ##demografi query 
 SELECT 
-	                 GELAR_SEBELUM_NAMA 
-                     ,NAMA_LENGKAP
-                     ,GELAR_SESUDAH_NAMA
-                     ,ALAMAT_ID1
-                     ,ALAMAT_ID2
-                     ,ALAMAT_ID3
-                     ,ALAMAT_ID4
-                     ,current_date() AS TanggalLaporan
-                     ,JABATAN AS Pekerjaan
-                     ,ALAMAT_KANTOR3, RT_KANTOR
-                     ,RW_KANTOR, KELURAHAN_KANTOR
-                     ,KECAMATAN_KANTOR
-                     ,KOTA_KANTOR
-                     ,PROPINSI_KANTOR
-                     ,KODEPOS_KANTOR
-                    FROM CHUB_DEMOGRAPHY 
-                       WHERE cifno IN 
-                        (SELECT b.CIFNO FROM REKENING_KORAN.DDMAST b
-                       WHERE b.ACCTNO ='{acctno}')
-
-
-
-##QUERY JOIN DARI ARIS ##
-SELECT 
 c.GELAR_SEBELUM_NAMA ,c.NAMA_LENGKAP,c.GELAR_SESUDAH_NAMA,
 c.ALAMAT_ID1, c.ALAMAT_ID2,c.ALAMAT_ID3,c.ALAMAT_ID4,
 current_date() AS TanggalLaporan,
-c.JABATAN AS Pekerjaan,
+d.BRDESC AS UNIT_KERJA,
 c.ALAMAT_KANTOR3, c.RT_KANTOR, c.RW_KANTOR, c.KELURAHAN_KANTOR,c.KECAMATAN_KANTOR, c.KOTA_KANTOR, c.PROPINSI_KANTOR, c.KODEPOS_KANTOR,
 d.PRODUCT,
-d.CURRENCY
+d.CURRENCY,
+e.JDADDR AS ALAMATUNITKERJA
 FROM  CHUB_DEMOGRAPHY c 
 JOIN 
 (SELECT 
-	a.CIFNO,a.ACCTNO,a.PRODUCT,a.CURRENCY
+	a.CIFNO,a.ACCTNO,REGEXP_REPLACE(PRODUCT,'^\S* ','') AS PRODUCT,a.CURRENCY,a.BRANCH,a.BRDESC
 FROM CHUB_SAVING a
 WHERE a.CIFNO IN 
 (SELECT b.CIFNO FROM REKENING_KORAN.DDMAST b
-WHERE  b.ACCTNO ='115101000126539')
-AND a.ACCTNO like '%115101000126539' ) AS d
+WHERE  b.ACCTNO ='10001000002535' LIMIT 1)
+AND a.ACCTNO like '%10001000002535' LIMIT 1) AS d
 ON c.CIFNO = d.CIFNO
+INNER JOIN REKENING_KORAN.AS4_JHDATA e
+ON d.BRANCH=e.JDBR
