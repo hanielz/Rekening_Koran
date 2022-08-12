@@ -14,7 +14,7 @@ class Config:
     __instance__ = None 
     #kinit first
     # os.system('export KRB5_CONFIG="/root/krb5.conf"')
-    os.system('kinit -kt  C:\Connection_Phoenix\cldrodsdcsvc.keytab cldrodsdcsvc@HQ.BRI.CO.ID')
+    os.system('kinit -kt  /home/efan/.dbeaver-config/cldrodsdcsvc.keytab cldrodsdcsvc@HQ.BRI.CO.ID')
 
     
     
@@ -34,11 +34,11 @@ class Config:
     #         Config()
     #     return Config.__instance__
     def kinit():
-        os.system('kinit -kt  C:\Connection_Phoenix\cldrodsdcsvc.keytab cldrodsdcsvc@HQ.BRI.CO.ID')
+        os.system('kinit -kt /home/efan/.dbeaver-config/cldrodsdcsvc.keytab  cldrodsdcsvc@HQ.BRI.CO.ID')
         print("sukses kinit")
     #set schedule setiap 6 jam
     
-    # sched = BackgroundScheduler(daemon=True)
+    # sched = BackgroundScheduler(daemon=True)  
     # sched.add_job(kinit,'interval',hours=6)
     # sched.start()
     

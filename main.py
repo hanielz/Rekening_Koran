@@ -37,8 +37,5 @@ def read_no_rek( no_rekening: str, start_date, end_date: str):
     # Response = objModel.outputView(Mutasi)
     return Response
 
-@app.get("/test")
-def read_item(no_rekening: str, start_date, end_date: Union[str, None] = None  ):
-    return objModel.Mutasi(no_rekening,start_date, end_date) 
 
 # uvicorn.run(app, port=5000 , host='0.0.0.0')
