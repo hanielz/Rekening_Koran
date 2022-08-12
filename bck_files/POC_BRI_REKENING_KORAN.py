@@ -1,4 +1,3 @@
-import os
 import csv
 import time
 import decimal
@@ -21,6 +20,7 @@ from werkzeug.datastructures import LanguageAccept
 from flask import Flask, request, abort, jsonify
 from werkzeug.exceptions import HTTPException
 from apscheduler.schedulers.background import BackgroundScheduler
+import os
 import random
 
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
 #kinit schedule
 def kinit():
-    os.system('kinit -kt /home/cloud-user/CLDRODSDRSVC.keytab CLDRODSDRSVC@HQ.BRI.CO.ID')
+    os.system('kinit -kt home/efan/.dbeaver-config/cldrodsdcsvc.keytab cldrodsdcsvc@HQ.BRI.CO.ID')
 #set schedule setiap 6 jam
 sched = BackgroundScheduler(daemon=True)
 sched.add_job(kinit,'interval',hours=3)

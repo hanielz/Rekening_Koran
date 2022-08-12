@@ -1,4 +1,4 @@
-from var_dump import var_dump
+# from var_dump import var_dump
 
 #FastAPI Package
 from fastapi import FastAPI, status
@@ -31,10 +31,10 @@ def read_no_rek( no_rekening: str, start_date, end_date: str):
     Mutasi = objModel.Mutasi(no_rekening,start_date,end_date)
     
     ##2.DEMOGRAFI
-    #Demografi = objModel.demografi(no_rekening,start_date,end_date) 
+    Demografi = objModel.demografi(no_rekening,start_date,end_date) 
     ##3.OUTPUT RESPONSE
-    #Response = objModel.outputView(Mutasi,Demografi)
-    Response = objModel.outputView(Mutasi)
+    Response = objModel.outputView(Mutasi,Demografi)
+    # Response = objModel.outputView(Mutasi)
     return Response
 
 @app.get("/test")

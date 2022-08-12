@@ -1,19 +1,30 @@
-# import phoenixdb
-# import phoenixdb.cursor
+import phoenixdb
+import phoenixdb.cursor
+import os
+import random
+#from apscheduler.schedulers.background import BackgroundScheduler
 
-import mysql.connector 
-from mysql.connector import Error
+# import mysql.connector 
+# from mysql.connector import Error
 
 class Config:
 
     _cursor = None
     __connection = None
     __instance__ = None 
+    #kinit first
+    # os.system('export KRB5_CONFIG="/root/krb5.conf"')
+    os.system('kinit -kt  C:\Connection_Phoenix\cldrodsdcsvc.keytab cldrodsdcsvc@HQ.BRI.CO.ID')
 
+    
+    
     def __init__(self) :
             try :
-                #Config.__connection=phoenixdb.connect('http://hbdcm03.hq.bri.co.id:8765/',autocommit=True, auth="SPNEGO")
-                Config.__connection = mysql.connector.connect(host='localhost', user='root', password='P@ssw0rd', db='classicmodels') 
+                server = ['hbdcm01.hq.bri.co.id', 'hbdcm02.hq.bri.co.id', 'hbdcm03.hq.bri.co.id']
+                server = random.choice(server)
+                # Config.__connection=phoenixdb.connect('http://hbdcm03.hq.bri.co.id:8765/',autocommit=True, auth="SPNEGO")
+                Config.__connection=phoenixdb.connect('http://' +(server)+ ':8765/',autocommit=True, auth="SPNEGO")
+                #Config.__connection = mysql.connector.connect(host='localhost', user='root', password='P@ssw0rd', db='classicmodels') 
             except:
                 print("Error while connect to Phoenix") 
     #SINGLETON PATTERN
@@ -22,32 +33,45 @@ class Config:
     #     if not Config.__instance__:
     #         Config()
     #     return Config.__instance__
+    def kinit():
+        os.system('kinit -kt  C:\Connection_Phoenix\cldrodsdcsvc.keytab cldrodsdcsvc@HQ.BRI.CO.ID')
+        print("sukses kinit")
+    #set schedule setiap 6 jam
+    
+    # sched = BackgroundScheduler(daemon=True)
+    # sched.add_job(kinit,'interval',hours=6)
+    # sched.start()
+    
+
+    def cbalQuery(self,acctno) :
+        query =f""" SELECT CBAL_BASE AS CBAL_BASE FROM REKENING_KORAN.DDMAST 
+                WHERE ACCTNO = '{acctno}' """
+                
+        run = Config.run_query(self, query)
+        return run
 
     #GEET DEMOGRAFI RECORD    
     def demografiQuery(self,acctno) :
         query =f"""
-            SELECT 
-                GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA,
-                ALAMAT_ID1, ALAMAT_ID2,ALAMAT_ID3,ALAMAT_ID4,
+SELECT 
+                ARRAY_TO_STRING(ARRAY[GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA],' ') AS NAMA,
+                ARRAY_TO_STRING(ARRAY[ALAMAT_ID1,ALAMAT_ID2,ALAMAT_ID3],' ') AS ALAMAT,
                 current_date() AS TanggalLaporan,
                 ACCTNO,
-                d.BRDESC AS UNIT_KERJA,
-                c.ALAMAT_KANTOR3, c.RT_KANTOR, c.RW_KANTOR, c.KELURAHAN_KANTOR,c.KECAMATAN_KANTOR, c.KOTA_KANTOR, c.PROPINSI_KANTOR, c.KODEPOS_KANTOR,
-                PRODUCT,
-                CURRENCY,
-                e.JDADDR AS ALAMATUNITKERJA
+                RTRIM(e.JDNAME) AS UNIT_KERJA,ARRAY_TO_STRING(ARRAY[RTRIM(e.JDADDR) ,RTRIM(e.JDCSZ)],' ') AS ALAMAT_UNIT_KERJA,
+                RTRIM(f.PSCDES) AS PRODUCT,
+                f.DP2CUR AS VALUTA
             FROM  CHUB_DEMOGRAPHY c 
             JOIN 
             (SELECT 
-                a.CIFNO,ACCTNO,REGEXP_REPLACE(PRODUCT,'^\S* ','') AS PRODUCT,a.CURRENCY,a.BRANCH,a.BRDESC
-            FROM CHUB_SAVING a
-            WHERE a.CIFNO IN 
-            (SELECT b.CIFNO FROM REKENING_KORAN.DDMAST b
-            WHERE  b.ACCTNO ='{acctno}' LIMIT 1)
-            AND a.ACCTNO like '%{acctno}' LIMIT 1) AS d
+                a.CIFNO,ACCTNO,a.BRANCH, a.SCCODE
+            FROM REKENING_KORAN.DDMAST a
+            WHERE a.ACCTNO ='{acctno}' LIMIT 1)   AS d         
             ON c.CIFNO = d.CIFNO
-            INNER JOIN REKENING_KORAN.AS4_JHDATA e
-            ON d.BRANCH=e.JDBR"""
+            LEFT JOIN REKENING_KORAN.JHDATA e
+            ON d.BRANCH = e.JDBR
+            LEFT JOIN REKENING_KORAN.AS4_DDPAR2 f
+            ON d.SCCODE = f.SCCODE"""
 
         run = Config.run_query(self, query)
         return run
@@ -55,30 +79,32 @@ class Config:
 
     def MutasiQuery(self, acctno, start_date, end_date) : 
         query = f"""    
-                 SELECT ACCTNO,CBAL,d.*  
-                 FROM REKENING_KORAN.DDMAST ddmast
-                    JOIN 
-                    (SELECT 
-                        dhist.TRANCD 	
-                        ,dhist.TRACCT
-                        ,dhist.TRDATE 
+                 SELECT 
+                        dhist.TRACCT AS TRACCT
+                        ,dhist.TRDATE  AS TRDATE
                         ,CASE 
                             WHEN dhist.TRDORC ='C' THEN dhist.amt
                             ELSE 0
-                        END AS Kredit
+                        END AS KREDIT
                         ,CASE	
                             WHEN dhist.TRDORC ='D' THEN dhist.amt 
                             ELSE 0
-                        END AS Debit
-                        ,dhist.TRUSER 
-                        ,dhist.TRREMK 
-                        ,dhist.TRTIME
-                        ,dhist.TLBDS1
-                        ,dhist.TLBDS2	
+                        END AS DEBIT
+                        ,REGEXP_REPLACE(TRUSER,' ',' ') as TRUSER
+                        ,SUBSTR(REGEXP_REPLACE(LPAD(TRTIME,6),' ','0'),1,2)||':'||SUBSTR(REGEXP_REPLACE(LPAD(TRTIME,6),' ','0'),3,2)||':'||SUBSTR(REGEXP_REPLACE(LPAD(TRTIME,6),' ','0'),4,2) AS WAKTU
+                        ,CASE
+                        WHEN 
+                        	TRREMK = '                                        ' AND TLBDS1 IS NULL AND TLBDS2 IS NULL   
+                        	THEN RTRIM(DDPAR3.DESCRIPTION) 
+						WHEN RTRIM(TRREMK) = RTRIM(TLBDS1)  THEN  ARRAY_TO_STRING(ARRAY[TRREMK ,TLBDS2],' ')
+						WHEN RTRIM(TRREMK) = RTRIM(TLBDS2)  THEN  ARRAY_TO_STRING(ARRAY[TRREMK ,TLBDS1],' ')
+						ELSE ARRAY_TO_STRING(ARRAY[TRREMK,TLBDS1,TLBDS2],' ')
+						END AS REMARK 
                 FROM REKENING_KORAN.DL_DDHIST dhist
-                WHERE dhist.TRACCT = '{acctno}' AND TO_NUMBER(dhist.TRDATE) BETWEEN {start_date} AND {end_date}) AS d
-                ON ddmast.ACCTNO = d.TRACCT
-                ORDER BY (d.TRDATE,d.TRTIME) ASC""" 
+                INNER JOIN REKENING_KORAN.AS4_DDPAR3 DDPAR3
+                ON dhist.TRANCD = DDPAR3.TRANCD
+                WHERE dhist.TRACCT = '{acctno}' AND TO_NUMBER(dhist.TRDATE) BETWEEN 2022150 AND 2022190
+                ORDER BY (dhist.TRDATE,dhist.TRTIME) ASC""" 
 
         run = Config.run_query(self, query) 
         # for row in run :
