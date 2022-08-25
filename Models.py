@@ -74,7 +74,7 @@ class Models(Procedure) :
 
         #get record from dl_ddhist
         Mutasi = Procedure._Singleton.MutasiQuery(Models.acctno, Models.start_date, Models.end_date) 
-
+        
         # Mutasi = Procedure._Singleton.dummy_query(Models.acctno, Models.start_date, Models.end_date)
         field_map = Models.fields(Mutasi)
                 
@@ -148,12 +148,26 @@ class Models(Procedure) :
 
 
     def loanMutasi(self,acctno, start_date, end_date) : 
-        return acctno
+            mutasi_rekening = [] 
+            temp = dict.fromkeys(['NoRek','tanggalTransaksi','jamTransaksi','teller','uraianTransaksi',
+            'saldoAwal','mutasiKredit','mutasiDebit','saldoAkhir' ])
 
+            temp['NoRek']	            = acctno
+            temp['tanggalTransaksi']    = start_date
+            temp['jamTransaksi']	    = "12:00"
+            temp['teller']	            = row[field_map['TRUSER']]
+            temp['uraianTransaksi']	    = row[field_map['REMARK'] ]
+            temp['saldoAwal']	        = 20,000,000
+            temp['mutasiKredit']        =  350,132
+            temp['mutasiDebit']	        =  0,0
+            temp['saldoAkhir']	        = "{:0,.2f}".format(Models.transaksi)
+            
+            mutasi_rekening.append(temp)
+            
+            return mutasi_rekening
 
     #FUNCTION TO SHOW
     def outputView(self,body,demografi):
-    # def outputView(self, body):
         data = {'Response' : 
         {
             "statusCode": 200,
@@ -165,22 +179,22 @@ class Models(Procedure) :
                         "Header" : demografi,
                         "Body" : body
                     }
-             ,"Footer" : {
-                          "saldoAwalMutasi" :  50000.00
-                         ,"saldoAkhirMutasi" : 6720.00
-                         ,"totalMutasiDebit" : 0
-                         ,"totalMutasiKredit": 210.00
-                         ,"terbilang " : "tiga ribu dua ratus rupiah"
+            #  ,"Footer" : {
+            #               "saldoAwalMutasi" :  50000.00
+            #              ,"saldoAkhirMutasi" : 6720.00
+            #              ,"totalMutasiDebit" : 0
+            #              ,"totalMutasiKredit": 210.00
+            #              ,"terbilang " : "tiga ribu dua ratus rupiah"
+            #             } 
+
+            ,"Footer" : {
+                          "saldoAwalMutasi" :  "{:0,.2f}".format(Models.saldo_awal)
+                         ,"saldoAkhirMutasi" : "{:0,.2f}".format(Models.transaksi)
+                         ,"totalMutasiDebit" : "{:0,.2f}".format(Models.FooterParameter('DEBIT'))
+                         ,"totalMutasiKredit": "{:0,.2f}".format(Models.FooterParameter('KREDIT'))
+                         ,"terbilang " : Models.ConvertTerbilang(Models.transaksi) + " Rupiah"
                         #  , "tes" : decimal.Decimal(Models.FooterParameter('DEBIT'))
-                        } 
-            # ,"Footer" : {
-            #               "saldoAwalMutasi" :  "{:0,.2f}".format(Models.saldo_awal)
-            #              ,"saldoAkhirMutasi" : "{:0,.2f}".format(Models.transaksi)
-            #              ,"totalMutasiDebit" : "{:0,.2f}".format(Models.FooterParameter('DEBIT'))
-            #              ,"totalMutasiKredit": "{:0,.2f}".format(Models.FooterParameter('KREDIT'))
-            #              ,"terbilang " : Models.ConvertTerbilang(Models.transaksi) + " Rupiah"
-            #             #  , "tes" : decimal.Decimal(Models.FooterParameter('DEBIT'))
-            #             }
+                        }
 
                  #closing of Data
             }  #closing of response     
@@ -207,6 +221,7 @@ class Models(Procedure) :
 
     #Convert to Gergorian Date :
     def convertJuliandateTostandart(t):
+        t = str(t)
         date=datetime.datetime.strptime(t, '%Y%j').date()
         result=date.strftime("%d/%m/%Y")
         return result

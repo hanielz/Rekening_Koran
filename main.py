@@ -29,6 +29,7 @@ async def read_no_rek(no_rekening: str, start_date, end_date: str):
     
     ##2.DEMOGRAFI
     Demografi = objModel.demografi(no_rekening,start_date,end_date) 
+
     ##3.OUTPUT RESPONSE
     Output = objModel.outputView(Mutasi,Demografi)
     # Response = objModel.outputView(Mutasi)
@@ -41,6 +42,7 @@ async def read_no_rek(no_rekening: str, start_date, end_date: str):
 
 @app.get("/Rekening_Koran/loan/{no_rekening}/{start_date}/{end_date}")
 async def read_no_rek(no_rekening: str, start_date, end_date: str):
+    #1. DEMOGRAFI
     loanDemografi = objModel.loanDemografi(no_rekening,start_date,end_date)
     print(loanDemografi)
     # mutasiLoan = objModel.loanMutasi(self,acctno, start_date, end_date)

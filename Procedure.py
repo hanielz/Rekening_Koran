@@ -33,11 +33,8 @@ class Procedure(object) :
     
         if (auxtrc != "" ):  
             lxaft= getTltxaft  
-
             #RANGE to STRING
             # Procedure.rangeString(self,auxtrc )
-            
-        
             if (tlxaft =='A1' or auxtrc in('0688','0689') and Procedure.rangeString(self,auxtrc,716,712 ) == True):
                 desk_tran = getTltxds
                 if trancd == getTrancd :
@@ -45,35 +42,9 @@ class Procedure(object) :
                 else :                              
                     desk_tran = getTltxds
 
-                #--SELECT @DESK_TRAN=''
-
-                # IF (@AUXTRC BETWEEN '8500' AND '8699') OR (@AUXTRC BETWEEN '2762' AND '2765')
-				# BEGIN
-				# @DESK_TRAN= SUBSTRING(@TRREMK,1,20) --REMARK1
-
-				# @DESK_TRAN= @DESK_TRAN + SUBSTRING(@TRREMK,21,LEN(@TRREMK)) --REMARK2
-
-                # IF (@AUXTRC = '2501')
-				# BEGIN
-				# 	 @DESK_TRAN = 'PENARIKAN DARI ATM ' + @DESK_TRAN
-				# END
-								
-				# IF (@AUXTRC IN ('8518','8506'))
-				# BEGIN
-				# 	@DESK_TRAN = 'TRANSFER ' + @DESK_TRAN
-				# END
-						
-			
-				# IF (@AUXTRC = '9996')
-				# BEGIN
-				# 	 @DESK_TRAN = 'PENARIKAN TUNAI ATM BANK LAIN ' + @DESK_TRAN
-				# END
-				
-						
-				# IF (@AUXTRC = '8522')
-				# BEGIN
-				# 	 @DESK_TRAN = 'PEMBAYARAN ' + @DESK_TRAN
-				# END
+                if auxtrc in ('8518','8506') :
+                    desk_tran = 'TRANSFER ' + desk_tran
+                    
             else : #else of tlxaft =='A1'
                 if (trremk !='') : 
                     desk_tran=trremk

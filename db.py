@@ -50,8 +50,8 @@ class Config():
     
 
     def cbalQuery(self,acctno) :
-        query =f""" SELECT CBAL_BASE AS CBAL_BASE FROM REKENING_KORAN.DDMAST 
-                WHERE ACCTNO = '{acctno}' """
+        query =f""" SELECT CBAL AS CBAL_BASE FROM REKENING_KORAN.AS400_DDMAST 
+                WHERE ACCTNO = {acctno} LIMIT 1"""
                 
         run = Config.run_query(self, query)
         return run
@@ -103,31 +103,19 @@ class Config():
             JOIN 
             (SELECT 
                 a.CIFNO,ACCTNO,a.BRANCH, a.SCCODE
-            FROM REKENING_KORAN.DDMAST a
-            WHERE a.ACCTNO ='{acctno}' LIMIT 1)   AS d         
+            FROM REKENING_KORAN.AS400_DDMAST  a
+            WHERE a.ACCTNO ={acctno} LIMIT 1)   AS d         
             ON c.CIFNO = d.CIFNO
-            LEFT JOIN REKENING_KORAN.JHDATA e
+            LEFT JOIN REKENING_KORAN.AS400_JHDATA  e
             ON d.BRANCH = e.JDBR
             LEFT JOIN REKENING_KORAN.AS4_DDPAR2 f
             ON d.SCCODE = f.SCCODE"""
 
         run = Config.run_query(self, query)
         return run
-    
-    #2. LOAN
-    def loanDemografiQuery(self,acctno) :
-        query = f"""SELECT ACCTNO ,SNAME ,CIFNO ,CURTYP ,BR ,TYPE ,NPDT ,ORGAMT ,DRLIMT ,RATE ,MATDT ,NPDT,NIPDT7,
-                     (BILPRN + BILINT + BILESC + BILLC + BILOC + BILMC)  AS PERKIRAAN_TAGIHAN_BULAN_INI,
-                     (BILPNO + BILINO + BILESO + BILLCO + BILOCO + BILMCO)   AS TUNGGAKAN
-                FROM REKENING_KORAN.AS400_LNMAST 
-                WHERE ACCTNO = {acctno}""" 
-        run = Config.run_query(self, query)
-        return run
-
     def MutasiQuery(self, acctno, start_date, end_date) : 
-        
-        query = f"""    
-                 SELECT dhist.AUXTRC as AUXTRC
+        print(start_date, " ", end_date)
+        query = f"""SELECT dhist.AUXTRC as AUXTRC
                         ,dhist.TRANCD AS TRANCD
                         ,dhist.TRREMK AS TRREMK
                         ,dhist.TRACCT AS TRACCT
@@ -141,24 +129,36 @@ class Config():
                             ELSE 0
                         END AS DEBIT
                         ,REGEXP_REPLACE(TRUSER,' ',' ') as TRUSER
-                        ,SUBSTR(REGEXP_REPLACE(LPAD(TRTIME,6),' ','0'),1,2)||':'||SUBSTR(REGEXP_REPLACE(LPAD(TRTIME,6),' ','0'),3,2)||':'||SUBSTR(REGEXP_REPLACE(LPAD(TRTIME,6),' ','0'),4,2) AS WAKTU
+                        ,'' AS WAKTU
                         ,CASE
                         WHEN 
                         	TRREMK = '                                        ' AND TLBDS1 IS NULL AND TLBDS2 IS NULL   
-                        	THEN RTRIM(DDPAR3.DESCRIPTION) 
+                        	THEN RTRIM(DDPAR3."DESC") 
 						WHEN RTRIM(TRREMK) = RTRIM(TLBDS1)  THEN  ARRAY_TO_STRING(ARRAY[TRREMK ,TLBDS2],' ')
 						WHEN RTRIM(TRREMK) = RTRIM(TLBDS2)  THEN  ARRAY_TO_STRING(ARRAY[TRREMK ,TLBDS1],' ')
 						ELSE ARRAY_TO_STRING(ARRAY[TRREMK,TLBDS1,TLBDS2],' ')
 						END AS REMARK 
-                FROM REKENING_KORAN.DL_DDHIST dhist
-                INNER JOIN REKENING_KORAN.AS4_DDPAR3 DDPAR3
+                FROM REKENING_KORAN.AS4_DDDHIS dhist
+                INNER JOIN REKENING_KORAN.AS400_DDPAR3 DDPAR3
                 ON dhist.TRANCD = DDPAR3.TRANCD
-                WHERE dhist.TRACCT = '{acctno}' AND TO_NUMBER(dhist.TRDATE) BETWEEN {start_date} AND {end_date}
-                ORDER BY (dhist.TRDATE,dhist.TRTIME) ASC""" 
-
+                WHERE dhist.TRACCT = {acctno} AND dhist.TRDATE BETWEEN {start_date} AND {end_date}
+                ORDER BY (dhist.TRDATE,dhist.TRTIME) ASC"""
+                 
         run = Config.run_query(self, query) 
         # for row in run :
         return run
+
+    #2. LOAN
+    def loanDemografiQuery(self,acctno) :
+        query = f"""SELECT ACCTNO ,SNAME ,CIFNO ,CURTYP ,BR ,TYPE ,NPDT ,ORGAMT ,DRLIMT ,RATE ,MATDT ,NPDT,NIPDT7,
+                     (BILPRN + BILINT + BILESC + BILLC + BILOC + BILMC)  AS PERKIRAAN_TAGIHAN_BULAN_INI,
+                     (BILPNO + BILINO + BILESO + BILLCO + BILOCO + BILMCO)   AS TUNGGAKAN
+                FROM REKENING_KORAN.AS400_LNMAST 
+                WHERE ACCTNO = {acctno}""" 
+        run = Config.run_query(self, query)
+        return run
+
+    
    
     def dummy_query(self, acctno,start_date, end_date) :
 
