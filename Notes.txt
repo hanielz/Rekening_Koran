@@ -1,125 +1,38 @@
+GET REMARK Table
+###########
+- AS4_TLTX
+- AS4_DDPAR3
 
-data = {'Response' : 
-        {
-        "statusCode": 200,
-        "errorCode": "000",
-        "responseCode": "00",
-        "responseMessage": "Success",
-        "errors": "null"
-        ,"Data" : 
-                {
-                    "Header": 
-                        {
-                            "Nama"              : "Haniel Zefanya",
-                            "Alamat"            : "null",
-                            "NomorRekening"     : "null",
-                                        "NamaProduk"        : "null",
-                                        "Valuta"            : "null",
-                            "TanggalLaporan"    : "null",					
-                            "PeriodeTransaksi"  : "null",
-                            "UnitKerja"         : "null",
-                            "AlamatUnitKerja"   : "null"
-                        }
-                    ,"Body" :
-                        { 
-                        'NoRek'              :  row[field_map['TRACCT']] 
-                        ,'tanggalTransaksi'  :  row[field_map['TRDATE']] 
-                        ,'tanggalEfektif'    :  row[field_map['TRDATE']] 
-                        ,'jamTransaksi' 	 :  row[field_map['TRTIME'] ] 
-                        ,'kodeTransaksi' 	 :  row[field_map['TRNCD'] ]
-                        ,'deskTran'  	     :  ''
-                        ,'saldoAwal'         :  ''
-                        ,'mutasiKredit'      :  row[field_map['Kredit']] 
-                        ,'mytasiDebit'       :  row[field_map['Debit']] 
-                        ,'saldoAkhr'         :  ''
-                        }
-                } #closing of Data
-        }  #closing of response     
-} #closing of data
+################
+
+AS400_DDMAST => trx hari ini dan hari kemarin 
+AS4_DDTRN2 => trx hari ini 
+AS4_DDDHIS => trx hari kemarin 
 
 
-    SELECT GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA,
-    ALAMAT_ID1, ALAMAT_ID2,ALAMAT_ID3,ALAMAT_ID4,
-    current_date() AS TanggalLaporan,
-    JABATAN AS Pekerjaan,
-    ALAMAT_KANTOR3, RT_KANTOR, RW_KANTOR, KELURAHAN_KANTOR,KECAMATAN_KANTOR, KOTA_KANTOR, PROPINSI_KANTOR, KODEPOS_KANTOR
-    FROM CHUB_DEMOGRAPHY 
-    WHERE CIFNO = 'MC86345'
-
-#VARIABLE / JSON
-SELECT 
-PRODUCT AS NamaProduk,
-CURRENCY AS Valuta
-FROM CHUB_SAVING WHERE CIFNO  = 'MC86345' AND ACCTNO LIKE '%10001000002535'
+IF tanggal awal = hari ini
+	saldo Awal ambil ddmast periode tanggal_awal -1 hari  REKENING_KORAN.AS400_DDMAST 
+	DATA transaksi REKENING_KORAN.AS4_DDTRN2 
 
 
-#mutasi query
-ELECT 
-                        dhist.TRANCD 	
-                        ,dhist.TRACCT
-                        ,dhist.TRDATE 
-                        ,CASE 
-                            WHEN dhist.TRDORC ='C' THEN dhist.amt
-                            ELSE 0
-                        END AS Kredit
-                        ,CASE	
-                            WHEN dhist.TRDORC ='D' THEN dhist.amt 
-                            ELSE 0
-                        END AS Debit
-                        ,dhist.TRUSER 
-                        ,dhist.TRREMK 
-                        ,dhist.TRTIME
-                        ,dhist.TRANCD
-                        ,dhist.TLBDS1
-                        ,dhist.TLBDS2	
-                        FROM REKENING_KORAN.DL_DDHIST dhist
-                    where TRACCT='{acctno}' and TO_NUMBER(TRDATE) BETWEEN {start_date} AND {end_date}
+IF tanggal awal < hari ini tapi dibulan ini
+	saldo Awal ambil ddmast periode tanggal_awal -1 hari  REKENING_KORAN.AS400_DDMAST 
+	DATA transaksi REKENING_KORAN.AS4_DDTRN2 (hari ini) 	
+	DATA transaksi REKENING_KORAN.AS4_DDDHIS (untuk historycal)
+		
+SELECT DDDHIS., DDTRN2. FROM REKENING_KORAN.AS4_DDDHIS DDDHIS
+LEFT JOIN (SELECT TRACCT,TRDATE,AMT FROM REKENING_KORAN.AS4_DDTRN2 
+WHERE TRACCT = 101000467561 AND TRDATE= TANGGAL_AKHIR) AS  DDTRN2
+ON DDDHIS.TRACCT = DDTRN2.TRACCT
+WHERE DDDHIS.TRACCT =101000467561 AND DDDHIS.TRDATE BETWEEN TANGGAL_AWAL AND TANGGAL_AKHIR - 1
+	
+	
+IF tanggal awal < hari ini dan tanggl akhir < hari ini 
+	saldo Awal ambil ddmast periode tanggal_awal -1 hari  REKENING_KORAN.AS400_DDMAST 
+	DATA transaksi REKENING_KORAN.AS4_DDDHIS (untuk historycal)
 
-
-##demografi query 
-SELECT 
-c.GELAR_SEBELUM_NAMA ,c.NAMA_LENGKAP,c.GELAR_SESUDAH_NAMA,
-c.ALAMAT_ID1, c.ALAMAT_ID2,c.ALAMAT_ID3,c.ALAMAT_ID4,
-current_date() AS TanggalLaporan,
-d.BRDESC AS UNIT_KERJA,
-c.ALAMAT_KANTOR3, c.RT_KANTOR, c.RW_KANTOR, c.KELURAHAN_KANTOR,c.KECAMATAN_KANTOR, c.KOTA_KANTOR, c.PROPINSI_KANTOR, c.KODEPOS_KANTOR,
-d.PRODUCT,
-d.CURRENCY,
-e.JDADDR AS ALAMATUNITKERJA
-FROM  CHUB_DEMOGRAPHY c 
-JOIN 
-(SELECT 
-	a.CIFNO,a.ACCTNO,REGEXP_REPLACE(PRODUCT,'^\S* ','') AS PRODUCT,a.CURRENCY,a.BRANCH,a.BRDESC
-FROM CHUB_SAVING a
-WHERE a.CIFNO IN 
-(SELECT b.CIFNO FROM REKENING_KORAN.DDMAST b
-WHERE  b.ACCTNO ='10001000002535' LIMIT 1)
-AND a.ACCTNO like '%10001000002535' LIMIT 1) AS d
-ON c.CIFNO = d.CIFNO
-INNER JOIN REKENING_KORAN.AS4_JHDATA e
-ON d.BRANCH=e.JDBR
-
-
-#last query 11/08/2022
-SELECT 
-                GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA,
-                ALAMAT_ID1, ALAMAT_ID2,ALAMAT_ID3,ALAMAT_ID4,
-                current_date() AS TanggalLaporan,
-                ACCTNO,
-                d.BRDESC AS UNIT_KERJA,
-                c.ALAMAT_KANTOR3, c.RT_KANTOR, c.RW_KANTOR, c.KELURAHAN_KANTOR,c.KECAMATAN_KANTOR, c.KOTA_KANTOR, c.PROPINSI_KANTOR, c.KODEPOS_KANTOR,
-                PRODUCT,
-                CURRENCY,
-                e.JDADDR AS ALAMATUNITKERJA
-            FROM  CHUB_DEMOGRAPHY c 
-            JOIN 
-            (SELECT 
-                a.CIFNO,ACCTNO,REGEXP_REPLACE(PRODUCT,'^\S* ','') AS PRODUCT,a.CURRENCY,a.BRANCH,a.BRDESC
-            FROM CHUB_SAVING a
-            WHERE a.CIFNO IN 
-            (SELECT b.CIFNO FROM REKENING_KORAN.DDMAST b
-            WHERE  b.ACCTNO ='{acctno}' LIMIT 1)
-            AND a.ACCTNO like '%{acctno}' LIMIT 1) AS d
-            ON c.CIFNO = d.CIFNO
-            LEFT JOIN REKENING_KORAN.AS4_JHDATA e
-            ON d.BRANCH=e.JDBR
+	
+IF tanggal awal < hari ini dan tanggal awal < bulan ini
+	saldo Awal ambil ddmast periode ambil END OF MONTH INI TERUS DARI END OF MONTH ITU DI SUM TRANSAKSINYA KE TANGGAL AWAL  REKENING_KORAN.AS400_DDMAST 
+	DATA transaksi REKENING_KORAN.AS4_DDTRN2 (hari ini) 	
+	DATA transaksi REKENING_KORAN.AS4_DDDHIS (untuk historycal

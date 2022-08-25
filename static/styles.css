@@ -1,3 +1,17 @@
-h1 {
-    color: green;
+body{
+    background-color:rgb(236, 234, 232);
+}
+img {
+   width: 100%;
+   border-radius: 10px;
+}
+.image{
+    width: 30%;
+}
+.details{
+    width: 70%;
+    margin: 12px
+}
+.card {
+    border-radius: 20px;
 }

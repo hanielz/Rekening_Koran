@@ -7,7 +7,8 @@ import random
 # import mysql.connector 
 # from mysql.connector import Error
 
-class Config:
+
+class Config():
 
     _cursor = None
     __connection = None
@@ -15,7 +16,7 @@ class Config:
     #kinit first
     # os.system('export KRB5_CONFIG="/root/krb5.conf"')
     os.system('kinit -kt  /home/efan/.dbeaver-config/cldrodsdcsvc.keytab cldrodsdcsvc@HQ.BRI.CO.ID')
-
+    # os.system('kinit -kt  C:\Connection_Phoenix\cldrodsdcsvc.keytab cldrodsdcsvc@HQ.BRI.CO.ID')
     
     
     def __init__(self) :
@@ -36,6 +37,11 @@ class Config:
     def kinit():
         os.system('kinit -kt /home/efan/.dbeaver-config/cldrodsdcsvc.keytab  cldrodsdcsvc@HQ.BRI.CO.ID')
         print("sukses kinit")
+
+
+    # def kinit():
+    #     os.system('kinit -kt  C:\Connection_Phoenix\cldrodsdcsvc.keytab cldrodsdcsvc@HQ.BRI.CO.ID')
+    #     print("sukses kinit")   
     #set schedule setiap 6 jam
     
     # sched = BackgroundScheduler(daemon=True)  
@@ -50,10 +56,42 @@ class Config:
         run = Config.run_query(self, query)
         return run
 
-    #GEET DEMOGRAFI RECORD    
+    #GET GET TRANCD
+    def trancdQuery(self,trancd) : 
+        query =f"""SELECT trancd FROM REKENING_KORAN.AS4_DDPAR3 WHERE EFTTYP IN ('AFT','AGF')
+                    AND trancd IN( '{trancd}' )"""
+
+        run = Config.run_query(self,query)
+
+        # result = []
+        for row in run :
+            # temp = row[0]
+            # # temp['TRANCD'] = row[0]
+            # result.append(temp)
+            return row[0]
+
+    def tltxdsQuery(self, auxtrc) :
+        query = f"""SELECT TLTXDS FROM REKENING_KORAN.AS400_TLTX 
+                        WHERE TLTXCD={auxtrc}"""            
+        run = Config.run_query(self,query)
+        # return run
+        for row in run :
+            return row[0]
+
+    def tltxaftQuery(self, auxtrc) :
+        query = f"""SELECT TLXAFT FROM REKENING_KORAN.AS400_TLTX 
+                        WHERE TLTXCD={auxtrc}"""            
+        run = Config.run_query(self,query)
+        # return run
+        for row in run :
+            return row[0]
+
+
+    #GEET DEMOGRAFI RECORD :
+    # 1. CASA    
     def demografiQuery(self,acctno) :
         query =f"""
-SELECT 
+            SELECT 
                 ARRAY_TO_STRING(ARRAY[GELAR_SEBELUM_NAMA ,NAMA_LENGKAP,GELAR_SESUDAH_NAMA],' ') AS NAMA,
                 ARRAY_TO_STRING(ARRAY[ALAMAT_ID1,ALAMAT_ID2,ALAMAT_ID3],' ') AS ALAMAT,
                 current_date() AS TanggalLaporan,
@@ -75,12 +113,24 @@ SELECT
 
         run = Config.run_query(self, query)
         return run
-
+    
+    #2. LOAN
+    def loanDemografiQuery(self,acctno) :
+        query = f"""SELECT ACCTNO ,SNAME ,CIFNO ,CURTYP ,BR ,TYPE ,NPDT ,ORGAMT ,DRLIMT ,RATE ,MATDT ,NPDT,NIPDT7,
+                     (BILPRN + BILINT + BILESC + BILLC + BILOC + BILMC)  AS PERKIRAAN_TAGIHAN_BULAN_INI,
+                     (BILPNO + BILINO + BILESO + BILLCO + BILOCO + BILMCO)   AS TUNGGAKAN
+                FROM REKENING_KORAN.AS400_LNMAST 
+                WHERE ACCTNO = {acctno}""" 
+        run = Config.run_query(self, query)
+        return run
 
     def MutasiQuery(self, acctno, start_date, end_date) : 
+        
         query = f"""    
-                 SELECT 
-                        dhist.TRACCT AS TRACCT
+                 SELECT dhist.AUXTRC as AUXTRC
+                        ,dhist.TRANCD AS TRANCD
+                        ,dhist.TRREMK AS TRREMK
+                        ,dhist.TRACCT AS TRACCT
                         ,dhist.TRDATE  AS TRDATE
                         ,CASE 
                             WHEN dhist.TRDORC ='C' THEN dhist.amt
@@ -103,19 +153,13 @@ SELECT
                 FROM REKENING_KORAN.DL_DDHIST dhist
                 INNER JOIN REKENING_KORAN.AS4_DDPAR3 DDPAR3
                 ON dhist.TRANCD = DDPAR3.TRANCD
-                WHERE dhist.TRACCT = '{acctno}' AND TO_NUMBER(dhist.TRDATE) BETWEEN 2022150 AND 2022190
+                WHERE dhist.TRACCT = '{acctno}' AND TO_NUMBER(dhist.TRDATE) BETWEEN {start_date} AND {end_date}
                 ORDER BY (dhist.TRDATE,dhist.TRTIME) ASC""" 
 
         run = Config.run_query(self, query) 
         # for row in run :
         return run
-    def sum_query(self, acctno,start_date, end_date):
-        query=f"""select 
-                      CASE WHEN TRDORC ='D' THEN sum(amt) END AS sum_debit
-                     ,CASE WHEN TRDORC ='C' THEN SUM(amt) END AS sum_kredit 
-                   from DL_DHIST WHERE TRACCT='{acctno}' group by TRDORC;"""
-        run = Config.run_query(self, query)
-
+   
     def dummy_query(self, acctno,start_date, end_date) :
 
         query = f""" 

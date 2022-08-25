@@ -4,9 +4,10 @@
     <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet">
 </head>
 <header>
-    <p>Data Nasabah : {{}}</p>
+    <p>Data Nasabah : {{Demografi}}</p>
 </header>
 <body>
-    <p>Mutasi Rekening : {{ Output }}</p>
+    <p>Mutasi Rekening : {{ Mutasi }}</p>
+    <p> {{request}}</p>
 </body>
 </html>

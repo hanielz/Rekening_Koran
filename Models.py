@@ -1,12 +1,16 @@
+from Procedure import Procedure
+
 from datetime import datetime
 import datetime
+import decimal
+
 #from var_dump import var_dump
 
-from db import Config
+#from db import Config
 
-class Models() :
+class Models(Procedure) :
     
-    _Singleton = None
+    #_Singleton = None
     footer = ""
     saldo_awal=0
     transaksi=0
@@ -15,11 +19,11 @@ class Models() :
     end_date=""
 
     #INSTANCE OBJECT THIS CLASS    
-    def __init__(self):
-        Models._Singleton = Config()
+    # def __init__(self):
+    #     Procedure._Singleton = Config()
     
     def demografi(self,acctno,start_date,end_date):
-        demografi = Models._Singleton.demografiQuery(acctno) #retrive date from Database
+        demografi = Procedure._Singleton.demografiQuery(acctno) #retrive date from Database
         field_map = Models.fields(demografi)
 
         start_date = datetime.datetime.strptime(start_date, "%Y%m%d").strftime("%d/%m/%y")
@@ -46,13 +50,15 @@ class Models() :
 
     #FUNCTION TO GET TRANSACTION FROM DL_DDHIST
     def getsaldo(acctno):
-        test=Models._Singleton.cbalQuery(acctno)
+        test=Procedure._Singleton.cbalQuery(acctno)
         for row in test :
             get_saldo = row[0]
             return get_saldo
 
     #FUNCTION TO GET TRANSACTION FROM DL_DDHIST
     def Mutasi(self,acctno, start_date, end_date) :
+        
+        #ASSIGN CLASS VARIBALE to Local variable
         Models.acctno = acctno
         Models.start_date=start_date
         Models.end_date=end_date
@@ -60,18 +66,18 @@ class Models() :
         #CONVERT JULIAN DATE
         Models.start_date = Models.convertJulianDate(start_date)
         Models.end_date = Models.convertJulianDate(end_date)
-        
-        
-        get_saldo=Models.getsaldo(acctno)
 
-
+        #tesProcedureRemark(self,'this is remark method')
         
-        Mutasi = Models._Singleton.MutasiQuery(Models.acctno, Models.start_date, Models.end_date) #get record from dl_ddhist
+        #gte cbal from ddmast
+        get_saldo=Models.getsaldo(acctno) 
 
-        # Mutasi = Models._Singleton.dummy_query(Models.acctno, Models.start_date, Models.end_date)
+        #get record from dl_ddhist
+        Mutasi = Procedure._Singleton.MutasiQuery(Models.acctno, Models.start_date, Models.end_date) 
+
+        # Mutasi = Procedure._Singleton.dummy_query(Models.acctno, Models.start_date, Models.end_date)
         field_map = Models.fields(Mutasi)
                 
-        #print(saldo_awal)
         #get CBAL from previous period    
         saldo_awal = get_saldo + Models.FooterParameter('DEBIT') - Models.FooterParameter('KREDIT')
         
@@ -82,35 +88,71 @@ class Models() :
             temp = dict.fromkeys(['NoRek','tanggalTransaksi','jamTransaksi','teller','uraianTransaksi',
             'saldoAwal','mutasiKredit','mutasiDebit','saldoAkhir' ])
 
-    
+            get_remark =  Procedure.getremark(self,row[field_map['AUXTRC']], row[field_map['TRANCD']] ,row[field_map['TRREMK']],row[field_map['TRREMK']])
+                
+
             temp['NoRek']	            = row[field_map['TRACCT']]	
             temp['tanggalTransaksi']    = Models.convertJuliandateTostandart(row[field_map['TRDATE']])
             temp['jamTransaksi']	    = row[field_map['WAKTU']]   
-            temp['teller']	            = row[field_map['TRUSER']]	
-            temp['uraianTransaksi']	    = row[field_map['REMARK'] ]
-            temp['saldoAwal']	        = saldo_awal
-            temp['mutasiKredit']        =row[field_map['KREDIT']]	
-            temp['mutasiDebit']	        = row[field_map['DEBIT']]	
-            temp['saldoAkhir']	        = Models.transaksi = saldo_awal - row[field_map['DEBIT']]  + row[field_map['KREDIT']]
+            temp['teller']	            = row[field_map['TRUSER']]
 
+            trremk_string =  len(row[field_map['TRREMK']].strip())
+            if trremk_string == 0 :
+                temp['uraianTransaksi']	    = "kosong", get_remark
+                print("result get remark :" ,get_remark)
+            else :
+                temp['uraianTransaksi']	    = row[field_map['REMARK'] ]
+            temp['saldoAwal']	        = "{:0,.2f}".format(saldo_awal)
+            temp['mutasiKredit']        =  "{:0,.2f}".format(row[field_map['KREDIT']])	
+            temp['mutasiDebit']	        =  "{:0,.2f}".format(row[field_map['DEBIT']]) 
+
+            Models.transaksi = saldo_awal - row[field_map['DEBIT']]  + row[field_map['KREDIT']]
+
+            temp['saldoAkhir']	        = "{:0,.2f}".format(Models.transaksi)
+                
             saldo_awal = Models.transaksi
             
             mutasi_rekening.append(temp)
             
         return mutasi_rekening
 
-   
+    def testing(self,acctno) :
+        # #CALL FUNCTIOPN FORM PROCEDURE CLASS
+        get_remark = Procedure.getremark(self)
+
+        return get_remark
+
     def FooterParameter(type) :
-        print(Models.saldo_awal)
-        Mutasi = Models._Singleton.MutasiQuery(Models.acctno, Models.start_date, Models.end_date)
+        Mutasi = Procedure._Singleton.MutasiQuery(Models.acctno, Models.start_date, Models.end_date)
         field_map = Models.fields(Mutasi)
         hitung=sum(row[field_map[type]] for row in Mutasi)
         # Models.total_debit=sum(row[field_map['Debit']] for row in Mutasi)
         return hitung ;
 
+    ### LOAN METHOD ###
+    def loanDemografi(self,acctno,start_date,end_date) :
+        print(start_date,' ', end_date)
+        demografi_loan = Procedure._Singleton.loanDemografiQuery(acctno) #retrive date from Database
+        field_map = Models.fields(demografi_loan)
+        # start_date = datetime.datetime.strptime(start_date, "%Y%m%d").strftime("%d/%m/%y")
+        # end_date =  datetime.datetime.strptime(end_date, "%Y%m%d").strftime("%d/%m/%y")
+
+        for row in demografi_loan :
+            dict = {
+                        'nama'                 : row[field_map['SNAME']]
+                        ,'nomorRekening'        : row[field_map['ACCTNO']] 
+                        ,'perkiraanTagihan'     : row[field_map['PERKIRAAN_TAGIHAN_BULAN_INI']]
+                        ,'periodeTransaksi'     : row[field_map['TUNGGAKAN']]
+                }
+            return dict
+
+
+    def loanMutasi(self,acctno, start_date, end_date) : 
+        return acctno
+
+
     #FUNCTION TO SHOW
     def outputView(self,body,demografi):
-
     # def outputView(self, body):
         data = {'Response' : 
         {
@@ -123,14 +165,22 @@ class Models() :
                         "Header" : demografi,
                         "Body" : body
                     }
-            ,"Footer" : {
-                          "saldoAwal" :  Models.saldo_awal
-                         ,"saldoAkhir" : Models.transaksi
-                         ,"totalMutasiDebit" : Models.FooterParameter('DEBIT')
-                         ,"totalMutasiKredit": Models.FooterParameter('KREDIT')
-                         ,"terbilang " : Models.ConvertTerbilang(Models.transaksi) + " Rupiah"
-                        #  ,"Saldo Akhir" :    
-                        }
+             ,"Footer" : {
+                          "saldoAwalMutasi" :  50000.00
+                         ,"saldoAkhirMutasi" : 6720.00
+                         ,"totalMutasiDebit" : 0
+                         ,"totalMutasiKredit": 210.00
+                         ,"terbilang " : "tiga ribu dua ratus rupiah"
+                        #  , "tes" : decimal.Decimal(Models.FooterParameter('DEBIT'))
+                        } 
+            # ,"Footer" : {
+            #               "saldoAwalMutasi" :  "{:0,.2f}".format(Models.saldo_awal)
+            #              ,"saldoAkhirMutasi" : "{:0,.2f}".format(Models.transaksi)
+            #              ,"totalMutasiDebit" : "{:0,.2f}".format(Models.FooterParameter('DEBIT'))
+            #              ,"totalMutasiKredit": "{:0,.2f}".format(Models.FooterParameter('KREDIT'))
+            #              ,"terbilang " : Models.ConvertTerbilang(Models.transaksi) + " Rupiah"
+            #             #  , "tes" : decimal.Decimal(Models.FooterParameter('DEBIT'))
+            #             }
 
                  #closing of Data
             }  #closing of response     
