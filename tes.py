@@ -1,7 +1,10 @@
+from datetime import date
+from datetime import timedelta
 
-#OR (@AUXTRC IN('0688', '0689') AND @AUXTRC BETWEEN '0716' AND '0721')  :
+# Get today's date
+date='20220824'
 
-for i in range(716, 722):
-    a= str(i).zfill(4)
-    print (a)
-print()
+
+# Yesterday date
+yesterday = today - timedelta(days = 1)
+print("Yesterday was: ", yesterday)

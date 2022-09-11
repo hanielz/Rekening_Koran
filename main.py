@@ -11,10 +11,20 @@ import uvicorn
 
 #import Class Models from Models.py
 from Models import Models
-# from Procedure import Procedure
+# from Procedure import Procedure   
 
 #created object from class model
 objModel  = Models()
+
+def create_app():
+    app = FastAPI()
+
+    # set schedule setiap 6 jam
+    thread = Timer(config.KRB_LOOP_DELAY, kinit, ())
+    # thread = Timer(300, kinit, ())
+    thread.daemon = True
+    thread.start()
+    return app
 
 #FastAPI Object
 app = FastAPI()
@@ -23,15 +33,16 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/Rekening_Koran/casa/{no_rekening}/{start_date}/{end_date}")
 async def read_no_rek(no_rekening: str, start_date, end_date: str):
-    
     ##1.MUTASI
-    Mutasi = objModel.Mutasi(no_rekening,start_date,end_date)
+    Mutasi = objModel.Mutasi(no_rekening,start_date,end_date,'casa')
     
     ##2.DEMOGRAFI
     Demografi = objModel.demografi(no_rekening,start_date,end_date) 
 
+    Footer = objModel.Footer()
+
     ##3.OUTPUT RESPONSE
-    Output = objModel.outputView(Mutasi,Demografi)
+    Output = objModel.outputView(Mutasi,Demografi,Footer)
     # Response = objModel.outputView(Mutasi)
     return Output
     # return templates.TemplateResponse(
@@ -42,16 +53,20 @@ async def read_no_rek(no_rekening: str, start_date, end_date: str):
 
 @app.get("/Rekening_Koran/loan/{no_rekening}/{start_date}/{end_date}")
 async def read_no_rek(no_rekening: str, start_date, end_date: str):
+    
     #1. DEMOGRAFI
     loanDemografi = objModel.loanDemografi(no_rekening,start_date,end_date)
-    print(loanDemografi)
-    # mutasiLoan = objModel.loanMutasi(self,acctno, start_date, end_date)
-    Output = objModel.outputView('mutasiLoan',loanDemografi)
+
+    mutasiLoan = objModel.Mutasi(no_rekening,start_date,end_date,'loan')
+
+    Footer = objModel.Footer()
+    
+    #3. OUTPUT
+    Output = objModel.outputView(mutasiLoan,loanDemografi, Footer)
     return Output
 
 @app.get("/testing/{no_rekening}/{start_date}/{end_date}")
-async def main_testing(no_rekening: str, start_date:str, end_date: str):
-    # test = objModel.testing(no_rekening)
-    Mutasi = objModel.Mutasi(no_rekening,start_date,end_date)
-    return Mutasi
+async def main_testing(no_rekening: str, start_date:str, end_date: str  ):
+    result = objModel.testing(no_rekening,start_date,end_date)
+    return result
 

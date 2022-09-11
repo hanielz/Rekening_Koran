@@ -14,9 +14,15 @@ IF tanggal awal = hari ini
 	saldo Awal ambil ddmast periode tanggal_awal -1 hari  REKENING_KORAN.AS400_DDMAST 
 	DATA transaksi REKENING_KORAN.AS4_DDTRN2 
 
+	example :
+			start_date : 20220825
+			if start_date = date.today() :
+				saldo_awal = "sum(cbal)FROM REKENIING_KORAN.AS4_TLTX
+							  WHERE PERIODE = PERIODE-1 "
 
 IF tanggal awal < hari ini tapi dibulan ini
 	saldo Awal ambil ddmast periode tanggal_awal -1 hari  REKENING_KORAN.AS400_DDMAST 
+
 	DATA transaksi REKENING_KORAN.AS4_DDTRN2 (hari ini) 	
 	DATA transaksi REKENING_KORAN.AS4_DDDHIS (untuk historycal)
 		
@@ -33,6 +39,15 @@ IF tanggal awal < hari ini dan tanggl akhir < hari ini
 
 	
 IF tanggal awal < hari ini dan tanggal awal < bulan ini
-	saldo Awal ambil ddmast periode ambil END OF MONTH INI TERUS DARI END OF MONTH ITU DI SUM TRANSAKSINYA KE TANGGAL AWAL  REKENING_KORAN.AS400_DDMAST 
-	DATA transaksi REKENING_KORAN.AS4_DDTRN2 (hari ini) 	
-	DATA transaksi REKENING_KORAN.AS4_DDDHIS (untuk historycal
+	saldo Awal ambil ddmast periode ambil END OF MONTH INI TERUS 
+	DARI END OF MONTH ITU DI SUM TRANSAKSINYA KE TANGGAL AWAL  REKENING_KORAN.AS400_DDMAST 
+
+	SOURCE :
+		DATA transaksi REKENING_KORAN.AS4_DDTRN2 (hari ini) 	
+		DATA transaksi REKENING_KORAN.AS4_DDDHIS (untuk historycal
+
+	example :
+		start_date : 20220825 
+		if start_date < 202208 :
+			saldo_awal : "sum(cbal) FROM REKENING_KORAN.AS400_DDMAST 
+							WHERE PERIODE between end_of_month(PERIODE) and start_date"
